@@ -1,3 +1,4 @@
 [submodule "firefly"]
 	path = firefly
 	url = https://github.com/DanielProano/Firefly.git
+	branch = main
