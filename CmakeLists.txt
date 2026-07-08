@@ -28,10 +28,15 @@ add_executable(dragonfly
     src/hal/src/i2c.c
     src/hal/src/pwm.c
     src/hal/src/uart.c
-    src/sensors/imu.c
-    src/startup/startup_stm32f401.c
+    src/sensors/src/imu.c
     src/tasks/src/comms_task.c
     src/tasks/src/control_task.c
     src/tasks/src/health_task.c
     src/main.c
+)
+
+target_link_libraries(dragonfly
+    firefly_hal_stm32f401
+    firefly_kernel
+    firefly_port_cortex_m4
 )
