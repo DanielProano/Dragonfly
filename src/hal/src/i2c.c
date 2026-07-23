@@ -83,7 +83,7 @@ void i2c_write_byte(uint8_t byte) {
     while (!(I2C1->SR1 & (1 << 2)));
 }
 
-void i2c_write_address(uint8_t data, uint8_t read_or_write) {
+void i2c_send_address(uint8_t data, uint8_t read_or_write) {
     /* Shift address over, form complete message */
     /* LSB is used to indicate read or write */
     I2C1->DR = (data << 1) | (read_or_write & 0x1);
