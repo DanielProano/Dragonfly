@@ -8,11 +8,11 @@ void i2c_init(void) {
     /* Enable Clock for I2C1 */
     RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
 
-    GPIOB->MODER &= ~(0x3 << 12);
-    GPIOB->MODER &= ~(0x3 << 14);
+    GPIOB->MODER &= ~(GPIO_MODER_MODE6);
+    GPIOB->MODER &= ~(GPIO_MODER_MODE7);
 
-    GPIOB->MODER |= (0x2 << 12);
-    GPIOB->MODER |= (0x2 << 14);
+    GPIOB->MODER |= (0x2 << GPIO_MODER_MODE6_Pos);
+    GPIOB->MODER |= (0x2 << GPIO_MODER_MODE7_Pos);
 
     /* Configure alternate functions */
     /* Page 162 of Reference Manual */
