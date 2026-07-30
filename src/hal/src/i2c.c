@@ -92,7 +92,7 @@ void i2c_send_address(uint8_t data, uint8_t read_or_write) {
     while (!(I2C1->SR1 & (1 << 1)));
 
     /*  Clear ADDR flag by reading SR1 & then SR2, 
-        ORing them is arbitrary */
+        ORing them is an arbitrary choice */
     (void) (I2C1->SR1 | I2C1->SR2);
 }
 

@@ -76,19 +76,21 @@ void pwm_init(void) {
 
     pwm_set_frequency(PWM_DEFAULT_HZ);
 
-    /*  Idle throttle on every channel before any output is enabled, so
-     *  the first edge an ESC sees is a valid stop command. */
+    /*  Idle throttle */
     for (PWM_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
         pwm_set_pulse_us(ch, PWM_IDLE_US);
     }
 
-    /* Load CCRx out of the preload registers */
+    /* force reload */
     TIM3->EGR |= TIM_EGR_UG;
 
-    /* Start counting. Outputs stay disconnected until pwm_enable */
+    /* counter enable */
     TIM3->CR1 |= TIM_CR1_CEN;
 }
 
+/* pwm works by comparing CNT against CCR */
+/* So pwn will auto-increment CNT & wrap it around */
+/* A channel is active is CNT < CCR */
 void pwm_set_frequency(uint32_t hz) {
     if (hz == 0) {
         return;
@@ -114,11 +116,11 @@ void pwm_set_frequency(uint32_t hz) {
     /* ARR = period in ticks - 1 */
     TIM3->ARR = ticks - 1U;
 
-    /*  PSC has no shadow register of its own and only reloads on an
-     *  update event, so force one. */
+    /*  force reload */
     TIM3->EGR |= TIM_EGR_UG;
 }
 
+/* Configure CCR for a channel */
 void pwm_set_pulse_us(PWM_channel_t channel, uint32_t us) {
     if (channel >= NUM_PWMS) {
         return;
@@ -133,6 +135,7 @@ void pwm_set_pulse_us(PWM_channel_t channel, uint32_t us) {
     *pwm_ccr[channel] = us;
 }
 
+/* Percentage wise configure CCR for a channel */
 void pwm_set_duty(PWM_channel_t channel, uint8_t percent) {
     if (channel >= NUM_PWMS) {
         return;
