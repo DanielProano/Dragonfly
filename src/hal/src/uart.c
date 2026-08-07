@@ -40,7 +40,7 @@ void uart_init(void) {
     GPIOA->AFR[1] &= ~(0xF << 8);
 
     /* See page 165 of Reference Manual, write AF7 into A10 */
-    GPIOA->AFR[1] |= (15 << 8);
+    GPIOA->AFR[1] |= (7 << 8);
 
     /* Configure USART1 */
 
