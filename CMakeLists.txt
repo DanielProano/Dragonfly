@@ -43,6 +43,10 @@ target_include_directories(dragonfly PRIVATE
     src/hal/include
     src/sensors/include
     src/tasks/include
+
+    # Submodules
+    firefly
+    Dragonfly_Protocol
 )
 
 target_link_libraries(dragonfly
