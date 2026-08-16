@@ -2,9 +2,6 @@
 	path = firefly
 	url = https://github.com/DanielProano/Firefly.git
 	branch = main
-[submodule "src/protocol"]
-	path = src/protocol
-	url = git@github.com:DanielProano/Dragonfly_Protocol.git
 [submodule "Dragonfly_Protocol"]
 	path = Dragonfly_Protocol
 	url = git@github.com:DanielProano/Dragonfly_Protocol.git
