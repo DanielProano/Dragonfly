@@ -1,5 +1,6 @@
 #include "pwm.h"
-#include"stm32f401xc.h"
+#include "stm32f401xc.h"
+#include "mutex.h"
 
 #define TIM3_CLK_HZ         84000000U
 
@@ -18,7 +19,11 @@ static volatile uint32_t *const pwm_ccr[NUM_PWMS] = {
     &TIM3->CCR4,
 };
 
+static Mutex pwm_mutex;
+
 void pwm_init(void) {
+    mutex_init(&pwm_mutex);
+
     /* Enable B GPIO Pins*/
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
@@ -77,7 +82,7 @@ void pwm_init(void) {
     pwm_set_frequency(PWM_DEFAULT_HZ);
 
     /*  Idle throttle */
-    for (PWM_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
+    for (pwm_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
         pwm_set_pulse_us(ch, PWM_IDLE_US);
     }
 
@@ -91,9 +96,9 @@ void pwm_init(void) {
 /* pwm works by comparing CNT against CCR */
 /* So pwn will auto-increment CNT & wrap it around */
 /* A channel is active is CNT < CCR */
-void pwm_set_frequency(uint32_t hz) {
+bool pwm_set_frequency(uint32_t hz) {
     if (hz == 0) {
-        return;
+        return false;
     }
 
     uint32_t ticks = PWM_TICK_HZ / hz;
@@ -101,8 +106,10 @@ void pwm_set_frequency(uint32_t hz) {
     /*  ARR is 16 bit on TIM3, so the longest period a 1us tick can hold
      *  is 65536us. Anything slower would silently wrap. */
     if (ticks == 0 || ticks > 65536U) {
-        return;
+        return false;
     }
+
+    mutex_lock(&pwm_mutex);
 
     /* Set how long a tick is */
     /* On page 307 of reference manual: */
@@ -116,15 +123,27 @@ void pwm_set_frequency(uint32_t hz) {
     /* ARR = period in ticks - 1 */
     TIM3->ARR = ticks - 1U;
 
+    for (pwm_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
+        if (*pwm_ccr[ch] > ticks) {
+            *pwm_ccr[ch] = ticks;
+        }
+    }
+
     /*  force reload */
     TIM3->EGR |= TIM_EGR_UG;
+
+    mutex_unlock(&pwm_mutex);
+
+    return true;
 }
 
 /* Configure CCR for a channel */
-void pwm_set_pulse_us(PWM_channel_t channel, uint32_t us) {
+void pwm_set_pulse_us(pwm_channel_t channel, uint32_t us) {
     if (channel >= NUM_PWMS) {
         return;
     }
+
+    mutex_lock(&pwm_mutex);
 
     uint32_t period_us = TIM3->ARR + 1U;
 
@@ -133,10 +152,12 @@ void pwm_set_pulse_us(PWM_channel_t channel, uint32_t us) {
     }
 
     *pwm_ccr[channel] = us;
+
+    mutex_unlock(&pwm_mutex);
 }
 
 /* Percentage wise configure CCR for a channel */
-void pwm_set_duty(PWM_channel_t channel, uint8_t percent) {
+void pwm_set_duty(pwm_channel_t channel, uint8_t percent) {
     if (channel >= NUM_PWMS) {
         return;
     }
@@ -148,19 +169,27 @@ void pwm_set_duty(PWM_channel_t channel, uint8_t percent) {
     pwm_set_pulse_us(channel, ((TIM3->ARR + 1U) * percent) / 100U);
 }
 
-void pwm_enable(PWM_channel_t channel) {
+void pwm_enable(pwm_channel_t channel) {
     if (channel >= NUM_PWMS) {
         return;
     }
+
+    mutex_lock(&pwm_mutex);
 
     /* Each channel owns a 4 bit field in CCER */
     TIM3->CCER |= (TIM_CCER_CC1E << (channel * 4U));
+
+    mutex_unlock(&pwm_mutex);
 }
 
-void pwm_disable(PWM_channel_t channel) {
+void pwm_disable(pwm_channel_t channel) {
     if (channel >= NUM_PWMS) {
         return;
     }
 
+    mutex_lock(&pwm_mutex);
+
     TIM3->CCER &= ~(TIM_CCER_CC1E << (channel * 4U));
+
+    mutex_unlock(&pwm_mutex);
 }
