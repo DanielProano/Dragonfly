@@ -19,7 +19,7 @@ ${CMAKE_BINARY_DIR}/firefly/cortex_m4)
 
 add_executable(dragonfly 
     src/comms/src/crsf.c
-    src/comms/src/protocol.c
+    src/comms/src/comms_protocol.c
     src/controls/src/attitude.c
     src/controls/src/motor_mix.c
     src/controls/src/pid.c
@@ -29,6 +29,8 @@ add_executable(dragonfly
     src/hal/src/pwm.c
     src/hal/src/uart.c
     src/sensors/src/imu.c
+    Dragonfly_Protocol/crc.c
+    Dragonfly_Protocol/protocol_codec.c
     src/tasks/src/comms_task.c
     src/tasks/src/control_task.c
     src/tasks/src/health_task.c
