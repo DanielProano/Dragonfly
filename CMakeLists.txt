@@ -27,6 +27,7 @@ add_executable(dragonfly
     src/drivers/src/esc.c
     src/drivers/src/mpu.c
     src/hal/src/i2c.c
+    src/hal/src/imu_interrupt.c
     src/hal/src/pwm.c
     src/hal/src/uart.c
     src/sensors/src/imu.c
@@ -35,6 +36,7 @@ add_executable(dragonfly
     src/tasks/src/comms_task.c
     src/tasks/src/control_task.c
     src/tasks/src/health_task.c
+    src/tasks/src/imu_task.c
     src/main.c
     startup/stm32f401.c
 )
