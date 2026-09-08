@@ -4,6 +4,8 @@
 #include "scheduler.h"
 #include "comms_task.h"
 #include "control_task.h"
+#include "crsf.h"
+#include "health_task.h"
 
 int main(void) {
     fpu_init();
@@ -12,9 +14,13 @@ int main(void) {
 
     comms_init();
     control_init();
+    crsf_init();
+    health_init();
 
+    task_create(crsf_task, 3, "crsf");
     task_create(comms_task, 2, "comms");
     task_create(control_task, 1, "control");
+    task_create(health_task, 1, "health");
 
     scheduler_start();
 

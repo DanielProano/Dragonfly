@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define COMMS_UART_ID UART_2
-#define COMMS_BAUD    921600U
+#define COMMS_BAUD    230400U
 #define COMMS_FRAME_TIMEOUT_MS 50U
 #define COMMS_HEADER_SIZE      4U
 

@@ -5,6 +5,7 @@
 #include "semaphore.h"
 #include "scheduler.h"
 #include "protocol.h"
+#include "gpio.h"
 #include <string.h>
 
 #define UART_RX_QUEUE_DEPTH  (255)
@@ -32,6 +33,11 @@ typedef struct {
 } uart_instance_t;
 
 static uart_instance_t uart_instances[NUM_UARTS];
+static volatile bool uart_diag_byte_seen = false;
+
+bool uart_any_byte_seen(void) {
+    return uart_diag_byte_seen;
+}
 
 void uart_init(uart_id_t id, uint32_t baud) {
     uart_instance_t *instance = &uart_instances[id];
@@ -194,6 +200,9 @@ void uart_init(uart_id_t id, uint32_t baud) {
     instance->base->CR1 |= USART_CR1_RE;
     /* Enable USART */
     instance->base->CR1 |= USART_CR1_UE;
+    /* Enable idle-line interrupt so short frames get drained from
+       the DMA circular buffer without waiting for HT/TC */
+    instance->base->CR1 |= USART_CR1_IDLEIE;
 
     instance->base->CR3 |= USART_CR3_DMAR | USART_CR3_DMAT | USART_CR3_EIE;
     NVIC_EnableIRQ(instance->irqn);
@@ -274,6 +283,15 @@ uint32_t uart_rx_overrun_count(uart_id_t id) {
 static void uart_dma_rx_drain(uart_instance_t *instance) {
     uint32_t write_index = (UART_DMA_RX_BUF_SIZE - instance->dma_rx_stream->NDTR) % UART_DMA_RX_BUF_SIZE;
 
+    if (instance->dma_rx_read_index != write_index) {
+        /* Temporary diagnostic: earliest point software becomes aware
+           any byte arrived on any UART, before the queue/task layer.
+           Latches solid on so it can't be missed/masked by the
+           heartbeat blink's timing. */
+        gpio_set_pc13();
+        uart_diag_byte_seen = true;
+    }
+
     while (instance->dma_rx_read_index != write_index) {
         uint8_t byte = instance->dma_rx_buffer[instance->dma_rx_read_index];
         instance->dma_rx_read_index = (instance->dma_rx_read_index + 1) % UART_DMA_RX_BUF_SIZE;
@@ -290,6 +308,12 @@ static void uart_dma_tx_complete(uart_instance_t *instance) {
 
 static void uart_error_irq(uart_instance_t *instance) {
     uint32_t sr = instance->base->SR;
+
+    if (sr & USART_SR_IDLE) {
+        /* Clearing IDLE requires reading SR then DR */
+        (void) instance->base->DR;
+        uart_dma_rx_drain(instance);
+    }
 
     if (sr & (USART_SR_ORE | USART_SR_FE | USART_SR_NE)) {
         (void) instance->base->DR;

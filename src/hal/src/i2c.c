@@ -1,6 +1,10 @@
 #include "i2c.h"
 #include "stm32f401xc.h"
 
+/* Bare iteration-count timeout so a missing/stuck I2C device
+   (no ACK, no pull-ups, etc.) can never hang the whole MCU. */
+#define I2C_TIMEOUT_ITERATIONS 100000U
+
 void i2c_init(void) {
     /* Enable Clock for B pins*/
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -59,7 +63,7 @@ void i2c_init(void) {
     I2C1->CR1 |= I2C_CR1_PE;
 }
 
-void i2c_start(void) {
+bool i2c_start(void) {
     /* https://controllerstech.com/stm32-i2c-configuration-using-registers/ */
 
     /* Acknowledge enable */
@@ -69,44 +73,76 @@ void i2c_start(void) {
     I2C1->CR1 |= (1 << 8);
 
     /* Wait for Start generation confirmation */
-    while (!(I2C1->SR1 & (1 << 0)));
+    uint32_t timeout = I2C_TIMEOUT_ITERATIONS;
+    while (!(I2C1->SR1 & (1 << 0))) {
+        if (--timeout == 0) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-void i2c_write_byte(uint8_t byte) {
+bool i2c_write_byte(uint8_t byte) {
     /* Wait for TxE bit to indicate Data register is ready */
-    while (!(I2C1->SR1 & (1 << 7)));
+    uint32_t timeout = I2C_TIMEOUT_ITERATIONS;
+    while (!(I2C1->SR1 & (1 << 7))) {
+        if (--timeout == 0) {
+            return false;
+        }
+    }
 
     /* Write byte */
     I2C1->DR = byte;
 
     /* Wait for end of send */
-    while (!(I2C1->SR1 & (1 << 2)));
+    timeout = I2C_TIMEOUT_ITERATIONS;
+    while (!(I2C1->SR1 & (1 << 2))) {
+        if (--timeout == 0) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-void i2c_send_address(uint8_t data, uint8_t read_or_write) {
+bool i2c_send_address(uint8_t data, uint8_t read_or_write) {
     /* Shift address over, form complete message */
     /* LSB is used to indicate read or write */
     I2C1->DR = (data << 1) | (read_or_write & 0x1);
 
     /* Wait for ADDR flag to indicate success */
-    while (!(I2C1->SR1 & (1 << 1)));
+    uint32_t timeout = I2C_TIMEOUT_ITERATIONS;
+    while (!(I2C1->SR1 & (1 << 1))) {
+        if (--timeout == 0) {
+            return false;
+        }
+    }
 
-    /*  Clear ADDR flag by reading SR1 & then SR2, 
+    /*  Clear ADDR flag by reading SR1 & then SR2,
         ORing them is an arbitrary choice */
     (void) (I2C1->SR1 | I2C1->SR2);
+
+    return true;
 }
 
-uint8_t i2c_read_byte(uint8_t ack_enable) {
+bool i2c_read_byte(uint8_t ack_enable, uint8_t *byte_out) {
     /* Enable acknowledgement if caller demands it*/
     if (!ack_enable) {
         I2C1->CR1 &= ~(1 << 10);
     }
 
     /* Wait for byte to arrive*/
-    while (!(I2C1->SR1 & (1 << 6)));
+    uint32_t timeout = I2C_TIMEOUT_ITERATIONS;
+    while (!(I2C1->SR1 & (1 << 6))) {
+        if (--timeout == 0) {
+            return false;
+        }
+    }
 
     /* Return byte */
-    return (uint8_t) I2C1->DR;
+    *byte_out = (uint8_t) I2C1->DR;
+    return true;
 }
 
 void i2c_stop(void) {

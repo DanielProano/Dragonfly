@@ -23,6 +23,7 @@ add_executable(dragonfly
     src/controls/src/attitude.c
     src/controls/src/motor_mix.c
     src/controls/src/pid.c
+    src/drivers/src/barometer.c
     src/drivers/src/esc.c
     src/drivers/src/mpu.c
     src/hal/src/i2c.c
@@ -55,4 +56,5 @@ target_link_libraries(dragonfly
     hal_stm32f401
     kernel
     port_cortex_m4
+    m
 )

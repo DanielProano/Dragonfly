@@ -19,6 +19,7 @@ void uart_receive_bytes(uart_id_t id, uint8_t *buffer, uint32_t length);
 bool uart_receive_byte_timeout(uart_id_t id, uint8_t *byte, uint32_t timeout_ms);
 bool uart_receive_bytes_timeout(uart_id_t id, uint8_t *buffer, uint32_t length, uint32_t timeout_ms);
 uint32_t uart_rx_overrun_count(uart_id_t id);
+bool uart_any_byte_seen(void);
 
 void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);
