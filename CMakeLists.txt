@@ -26,9 +26,9 @@ add_executable(dragonfly
     src/drivers/src/barometer.c
     src/drivers/src/esc.c
     src/drivers/src/mpu.c
+    src/hal/src/dshot.c
     src/hal/src/i2c.c
     src/hal/src/imu_interrupt.c
-    src/hal/src/pwm.c
     src/hal/src/uart.c
     src/sensors/src/imu.c
     Dragonfly_Protocol/crc.c

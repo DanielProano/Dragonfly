@@ -1,32 +1,45 @@
 #include "esc.h"
-#include "pwm.h"
+#include "dshot.h"
+#include <stdbool.h>
 
-#define ESC_IDLE 1000U
+#define DSHOT_THROTTLE_RANGE (DSHOT_THROTTLE_MAX - DSHOT_THROTTLE_MIN)
+
+static bool esc_armed;
 
 void esc_init(void) {
-    pwm_init();
+    dshot_init();
+    esc_armed = false;
 }
 
 void esc_arm(void) {
-    for (pwm_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
-        pwm_enable(ch);
-    }
+    esc_armed = true;
 }
 
 void esc_disarm(void) {
-    for (pwm_channel_t ch = PWM_CH1; ch < NUM_PWMS; ch++) {
-        pwm_disable(ch);
-    }
+    esc_armed = false;
+    esc_stop_all();
 }
 
-void esc_set_throttle(pwm_channel_t channel, uint8_t percent) {
-    /* Normalized to */
-    uint32_t normalized_us = 1000U + ((uint32_t) percent * 1000U) / 100U;
-    pwm_set_pulse_us(channel, normalized_us);
+void esc_set_throttle(dshot_channel_t channel, uint8_t percent) {
+    if (percent > 100U) {
+        percent = 100U;
+    }
+
+    if (!esc_armed) {
+        dshot_set_throttle(channel, 0U);
+        return;
+    }
+
+    uint16_t value = (uint16_t) (DSHOT_THROTTLE_MIN + ((uint32_t) percent * DSHOT_THROTTLE_RANGE) / 100U);
+    dshot_set_throttle(channel, value);
 }
 
 void esc_stop_all(void) {
-    for (pwm_channel_t channel = PWM_CH1; channel < NUM_PWMS; channel++) {
-        pwm_set_pulse_us(channel, ESC_IDLE);
+    for (dshot_channel_t channel = DSHOT_CH1; channel < NUM_DSHOT_CHANNELS; channel++) {
+        dshot_set_throttle(channel, 0U);
     }
+}
+
+void esc_send(void) {
+    dshot_send();
 }
