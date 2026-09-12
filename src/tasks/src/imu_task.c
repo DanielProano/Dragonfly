@@ -3,6 +3,7 @@
 #include "imu_interrupt.h"
 #include "comms_protocol.h"
 #include "scheduler.h"
+#include "i2c.h"
 
 /* Telemetry to the ground station is capped independent of how often the
    sensor itself wakes this task, so raising the sensor's report rate for
@@ -26,7 +27,9 @@ void imu_task(void) {
             float ax, ay, az, gx, gy, gz, mx, my, mz;
             bool have_accel, have_gyro, have_magnitude;
 
+            i2c_lock();
             mpu_poll();
+            i2c_unlock();
 
             have_accel = mpu_get_acceleration(&ax, &ay, &az);
             have_gyro = mpu_get_gyro(&gx, &gy, &gz);
@@ -36,20 +39,20 @@ void imu_task(void) {
                 uint32_t now = scheduler_get_tick_count();
 
                 if ((now - imu_last_telem_tick) >= IMU_TELEM_INTERVAL_MS) {
-                    IMU imu;
+                    imu imu_data;
 
-                    imu.timestamp = now;
-                    imu.acceleration.x = ax;
-                    imu.acceleration.y = ay;
-                    imu.acceleration.z = az;
-                    imu.gyro.x = gx;
-                    imu.gyro.y = gy;
-                    imu.gyro.z = gz;
-                    imu.magnitude.x = mx;
-                    imu.magnitude.y = my;
-                    imu.magnitude.z = mz;
+                    imu_data.timestamp = now;
+                    imu_data.acceleration.x = ax;
+                    imu_data.acceleration.y = ay;
+                    imu_data.acceleration.z = az;
+                    imu_data.gyro.x = gx;
+                    imu_data.gyro.y = gy;
+                    imu_data.gyro.z = gz;
+                    imu_data.magnitude.x = mx;
+                    imu_data.magnitude.y = my;
+                    imu_data.magnitude.z = mz;
 
-                    send_telem_imu(&imu);
+                    send_telem_imu(&imu_data);
                     imu_last_telem_tick = now;
                 }
             }

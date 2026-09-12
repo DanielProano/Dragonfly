@@ -105,7 +105,7 @@ bool barometer_init(void) {
     return bmp280_write_reg(BMP280_REG_CONFIG, (0x0U << 5) | (0x2U << 2));
 }
 
-bool barometer_poll(BAROMETER *out) {
+bool barometer_poll(barometer *out) {
     uint8_t raw[6];
     double var1, var2, temperature, pressure;
     int32_t t_fine;

@@ -5,6 +5,6 @@
 #include "protocol.h"
 
 bool barometer_init(void);
-bool barometer_poll(BAROMETER *out);
+bool barometer_poll(barometer *out);
 
 #endif

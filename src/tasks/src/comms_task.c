@@ -23,8 +23,8 @@ void comms_init(void) {
 }
 
 void comms_send(uint8_t msg_id, const void *payload, uint8_t payload_len) {
-    FRAME frame;
-    uint8_t buffer[sizeof(FRAME)];
+    frame frame;
+    uint8_t buffer[sizeof(frame)];
     int encoded_len;
 
     if (payload_len > PAYLOAD_MAX_SIZE) {
@@ -50,7 +50,7 @@ void comms_send(uint8_t msg_id, const void *payload, uint8_t payload_len) {
 }
 
 void comms_task(void) {
-    uint8_t buffer[sizeof(FRAME)];
+    uint8_t buffer[sizeof(frame)];
 
     for (;;) {
         uint8_t start_byte = uart_receive_byte(COMMS_UART_ID);
@@ -77,7 +77,7 @@ void comms_task(void) {
             continue;
         }
 
-        FRAME frame;
+        frame frame;
 
         if (protocol_frame_decode(&frame, buffer, 5 + remaining) < 0) {
             continue;

@@ -2,6 +2,7 @@
 #include "barometer.h"
 #include "comms_protocol.h"
 #include "scheduler.h"
+#include "i2c.h"
 
 #define HEALTH_POLL_INTERVAL_MS 100U
 
@@ -13,10 +14,15 @@ void health_init(void) {
 
 void health_task(void) {
     for (;;) {
-        BAROMETER barometer;
+        barometer barometer_data;
+        bool have_barometer;
 
-        if (health_barometer_ready && barometer_poll(&barometer)) {
-            send_telem_barometer(&barometer);
+        i2c_lock();
+        have_barometer = health_barometer_ready && barometer_poll(&barometer_data);
+        i2c_unlock();
+
+        if (have_barometer) {
+            send_telem_barometer(&barometer_data);
         }
 
         task_delay(HEALTH_POLL_INTERVAL_MS);

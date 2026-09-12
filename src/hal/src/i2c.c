@@ -1,11 +1,21 @@
 #include "i2c.h"
 #include "stm32f401xc.h"
+#include "mutex.h"
 
 /* Bare iteration-count timeout so a missing/stuck I2C device
    (no ACK, no pull-ups, etc.) can never hang the whole MCU. */
 #define I2C_TIMEOUT_ITERATIONS 100000U
 
+/* I2C1 is a single shared bus (barometer + IMU) read from two different
+   tasks. Callers must wrap each full logical transaction - which may
+   itself issue more than one i2c_start() for a repeated start - with
+   i2c_lock()/i2c_unlock() so one task's transaction can't interleave
+   with another's mid-byte. */
+static Mutex i2c_mutex;
+
 void i2c_init(void) {
+    mutex_init(&i2c_mutex);
+
     /* Enable Clock for B pins*/
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
@@ -61,6 +71,14 @@ void i2c_init(void) {
 
     /* Enable I2C_CR1 */
     I2C1->CR1 |= I2C_CR1_PE;
+}
+
+void i2c_lock(void) {
+    mutex_lock(&i2c_mutex);
+}
+
+void i2c_unlock(void) {
+    mutex_unlock(&i2c_mutex);
 }
 
 bool i2c_start(void) {

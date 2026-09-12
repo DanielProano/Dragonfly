@@ -4,7 +4,7 @@
 #include <string.h>
 
 void send_heartbeat(uint8_t state, uint8_t mode, uint16_t error_flags) {
-    HEARTBEAT_PAYLOAD payload;
+    heartbeat_payload payload;
 
     payload.timestamp = scheduler_get_tick_count();
     payload.error_flags = error_flags;
@@ -14,8 +14,16 @@ void send_heartbeat(uint8_t state, uint8_t mode, uint16_t error_flags) {
     comms_send(MSG_HEARTBEAT, &payload, (uint8_t) sizeof(payload));
 }
 
+void send_flight_state(uint8_t state) {
+    flight_state_payload payload;
+
+    payload.state = state;
+
+    comms_send(MSG_FLIGHT_STATE, &payload, (uint8_t) sizeof(payload));
+}
+
 void send_ack(uint8_t ack_seq) {
-    ACK_PAYLOAD payload;
+    ack_payload payload;
 
     payload.ack_seq = ack_seq;
 
@@ -23,7 +31,7 @@ void send_ack(uint8_t ack_seq) {
 }
 
 void send_nack(uint8_t nacked_seq, uint8_t error) {
-    NACK_PAYLOAD payload;
+    nack_payload payload;
 
     payload.nacked_seq = nacked_seq;
     payload.error = error;
@@ -31,36 +39,36 @@ void send_nack(uint8_t nacked_seq, uint8_t error) {
     comms_send(MSG_NACK, &payload, (uint8_t) sizeof(payload));
 }
 
-void send_bootloader_stats(BOOTLOADER_STATS_PAYLOAD *payload) {
+void send_bootloader_stats(bootloader_stats_payload *payload) {
     comms_send(MSG_BOOTLOADER_STATS, payload, (uint8_t) sizeof(*payload));
 }
 
-void send_telem_imu(const IMU *imu) {
-    TELEM_IMU_PAYLOAD payload;
+void send_telem_imu(const imu *imu_data) {
+    telem_imu_payload payload;
 
-    payload.imu = *imu;
+    payload.imu = *imu_data;
 
     comms_send(MSG_TELEM_IMU, &payload, (uint8_t) sizeof(payload));
 }
 
-void send_telem_barometer(const BAROMETER *barometer) {
-    TELEM_BAROMETER_PAYLOAD payload;
+void send_telem_barometer(const barometer *barometer_data) {
+    telem_barometer_payload payload;
 
-    payload.barometer = *barometer;
+    payload.barometer = *barometer_data;
 
     comms_send(MSG_TELEM_BAROMETER, &payload, (uint8_t) sizeof(payload));
 }
 
-void send_telem_power(const POWER *power) {
-    TELEM_POWER_PAYLOAD payload;
+void send_telem_power(const power *power_data) {
+    telem_power_payload payload;
 
-    payload.power = *power;
+    payload.power = *power_data;
 
     comms_send(MSG_TELEM_POWER, &payload, (uint8_t) sizeof(payload));
 }
 
 void send_log_string(const char *text) {
-    LOG_STRING_PAYLOAD payload;
+    log_string_payload payload;
 
     strncpy(payload.text, text, PAYLOAD_TEXT_SIZE - 1);
     payload.text[PAYLOAD_TEXT_SIZE - 1] = '\0';
@@ -69,7 +77,7 @@ void send_log_string(const char *text) {
 }
 
 void send_log_value(uint8_t key_id, float value) {
-    LOG_VALUE_PAYLOAD payload;
+    log_value_payload payload;
 
     payload.key_id = key_id;
     payload.value = value;
@@ -79,7 +87,7 @@ void send_log_value(uint8_t key_id, float value) {
 }
 
 void send_esp32_oled_print(char *msg, size_t msg_len) {
-    OLED_PAYLOAD payload;
+    oled_payload payload;
     size_t copy_len = msg_len < (PAYLOAD_TEXT_SIZE - 1) ? msg_len : (PAYLOAD_TEXT_SIZE - 1);
 
     payload.cmd = OLED_PRINT;
@@ -90,7 +98,7 @@ void send_esp32_oled_print(char *msg, size_t msg_len) {
 }
 
 void send_esp32_oled_clear(void) {
-    OLED_PAYLOAD payload;
+    oled_payload payload;
 
     payload.cmd = OLED_CLEAR;
     payload.text[0] = '\0';

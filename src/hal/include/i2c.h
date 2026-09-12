@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 void i2c_init(void);
+void i2c_lock(void);
+void i2c_unlock(void);
 bool i2c_start(void);
 bool i2c_write_byte(uint8_t byte);
 bool i2c_send_address(uint8_t data, uint8_t read_or_write);
