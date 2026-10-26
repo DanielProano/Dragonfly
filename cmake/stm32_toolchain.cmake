@@ -10,6 +10,7 @@ set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
 add_compile_options(
     -mcpu=cortex-m4
     -mthumb 
+    -g
     -mfpu=fpv4-sp-d16
     -mfloat-abi=hard
     -ffunction-sections

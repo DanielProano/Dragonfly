@@ -60,3 +60,9 @@ target_link_libraries(dragonfly
     port_cortex_m4
     m
 )
+
+find_program(OPENOCD openocd)
+
+if (OPENOCD) 
+    add_custom_target(flash COMMAND ${OPENOCD} -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program $<TARGET_FILE:dragonfly> verify reset exit" DEPENDS dragonfly USES_TERMINAL)
+endif()

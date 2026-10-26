@@ -5,3 +5,7 @@ Dragonfly is the flight controller application for a custom autonomous drone, wr
 ## Wiring
 
 <img width="1333" height="1652" alt="image" src="https://github.com/user-attachments/assets/993edaa8-d981-4c55-9243-35b40fe1e22c" />
+
+## Flash
+
+```./firefly/tools/flash.sh [dragonfly]```
