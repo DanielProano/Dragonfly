@@ -10,12 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${CMAKE_SOURCE_DIR}/linker/stm32f401.ld")
 set(FIREFLY_DIR ${CMAKE_SOURCE_DIR}/firefly)
 
-add_subdirectory(${FIREFLY_DIR}/src/hal/stm32f401
-${CMAKE_BINARY_DIR}/firefly/hal) 
-add_subdirectory(${FIREFLY_DIR}/src/kernel
-${CMAKE_BINARY_DIR}/firefly/kernel)
-add_subdirectory(${FIREFLY_DIR}/src/port/cortex_m4 
-${CMAKE_BINARY_DIR}/firefly/cortex_m4)
+add_subdirectory(firefly)
 
 add_executable(dragonfly 
     src/comms/src/crsf.c
