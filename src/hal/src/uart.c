@@ -244,7 +244,9 @@ void uart_receive_bytes(uart_id_t id, uint8_t *buffer, uint32_t length) {
     mutex_lock(&instance->rx_mutex);
 
     for (uint32_t i = 0; i < length; i++) {
-        dequeue(&instance->rx_queue, &buffer[i]);
+        while (dequeue(&instance->rx_queue, &buffer[i]) != QUEUE_OK) {
+            task_delay(1);
+        }
     }
 
     mutex_unlock(&instance->rx_mutex);
@@ -262,11 +264,15 @@ bool uart_receive_bytes_timeout(uart_id_t id, uint8_t *buffer, uint32_t length, 
     mutex_lock(&instance->rx_mutex);
 
     for (uint32_t i = 0; i < length; i++) {
-        uint32_t now = scheduler_get_tick_count();
-        uint32_t remaining = (deadline > now) ? (deadline - now) : 0;
+        while (dequeue(&instance->rx_queue, &buffer[i]) != QUEUE_OK) {
+            if ((int32_t)(deadline - scheduler_get_tick_count()) <= 0) {
+                success = false;
+                break;
+            }
+            task_delay(1);
+        }
 
-        if (!dequeue_timeout(&instance->rx_queue, &buffer[i], remaining)) {
-            success = false;
+        if (!success) {
             break;
         }
     }
@@ -296,7 +302,7 @@ static void uart_dma_rx_drain(uart_instance_t *instance) {
         uint8_t byte = instance->dma_rx_buffer[instance->dma_rx_read_index];
         instance->dma_rx_read_index = (instance->dma_rx_read_index + 1) % UART_DMA_RX_BUF_SIZE;
 
-        if (!enqueue_isr(&instance->rx_queue, &byte)) {
+        if (enqueue(&instance->rx_queue, &byte) != QUEUE_OK) {
             instance->rx_overrun_count += 1;
         }
     }

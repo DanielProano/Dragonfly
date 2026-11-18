@@ -12,37 +12,26 @@ set(FIREFLY_DIR ${CMAKE_SOURCE_DIR}/firefly)
 
 add_subdirectory(firefly)
 
+file(GLOB_RECURSE DRAGONFLY_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.c)
+
 add_executable(dragonfly 
-    src/comms/src/crsf.c
-    src/comms/src/comms_protocol.c
-    src/controls/src/attitude.c
-    src/controls/src/motor_mix.c
-    src/controls/src/pid.c
-    src/drivers/src/barometer.c
-    src/drivers/src/esc.c
-    src/drivers/src/mpu.c
-    src/hal/src/dshot.c
-    src/hal/src/i2c.c
-    src/hal/src/imu_interrupt.c
-    src/hal/src/uart.c
-    src/sensors/src/imu.c
+    ${DRAGONFLY_SOURCES}
     Dragonfly_Protocol/crc.c
     Dragonfly_Protocol/protocol_codec.c
-    src/tasks/src/comms_task.c
-    src/tasks/src/control_task.c
-    src/tasks/src/health_task.c
-    src/tasks/src/imu_task.c
-    src/main.c
     startup/stm32f401.c
 )
 
+file(GLOB_RECURSE DRAGONFLY_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)
+
+set(DRAGONFLY_INCLUDES "")
+foreach(header ${DRAGONFLY_HEADERS})
+    get_filename_component(header_dir ${header} DIRECTORY)
+    list(APPEND DRAGONFLY_INCLUDES ${header_dir})
+endforeach()
+list(REMOVE_DUPLICATES DRAGONFLY_INCLUDES)
+
 target_include_directories(dragonfly PRIVATE
-    src/comms/include
-    src/controls/include
-    src/drivers/include
-    src/hal/include
-    src/sensors/include
-    src/tasks/include
+    ${DRAGONFLY_INCLUDES}
 
     # Submodules
     firefly
